@@ -87,6 +87,8 @@ function App() {
   // Registration form state
   const [registerData, setRegisterData] = useState({
     name: '',
+    middle_name: '',
+    last_name: '',
     email: '',
     password: '',
     password_confirmation: '',
@@ -258,6 +260,21 @@ function App() {
                   margin="normal"
                   value={registerData.name}
                   onChange={(e) => setRegisterData({ ...registerData, name: e.target.value })}
+                  required
+                />
+                                <TextField
+                  fullWidth
+                  label="Middle Name"
+                  margin="normal"
+                  value={registerData.middle_name}
+                  onChange={(e) => setRegisterData({ ...registerData, middle_name: e.target.value })}
+                />
+                <TextField
+                  fullWidth
+                  label="Last Name"
+                  margin="normal"
+                  value={registerData.last_name}
+                  onChange={(e) => setRegisterData({ ...registerData, last_name: e.target.value })}
                   required
                 />
                 <TextField
