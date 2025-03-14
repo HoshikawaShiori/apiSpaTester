@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react'
 import { Container, Typography, Box, TextField, Button, Paper, Tab, Tabs, CircularProgress } from '@mui/material'
 import api, { fetchCSRFToken } from '../api/config'
 import { Google, GitHub, Facebook } from '@mui/icons-material'
+import useUserData from '../hooks/useUserData'
+import { isAuthenticated } from '~/api/authService';
+import { Navigate } from 'react-router'
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -32,15 +35,30 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [response, setResponse] = useState<any>(null);
   const [isInitialized, setIsInitialized] = useState(false);
-  const [userData, setUserData] = useState<any>(null);
+  const [redirect, setRedirect] = useState(false); 
+  
+  const { userData, error: userDataError, refetch } = useUserData();
+
+  const checkAuth = async () => {
+    if (await isAuthenticated()) {
+      setRedirect(true);
+    }
+  };
+  useEffect(() => {
+    checkAuth();
+  }, []);
+  useEffect(() => {
+    checkAuth();
+  }, [response]);
+
 
   useEffect(() => {
     const initializeCSRF = async () => {
       try {
         await fetchCSRFToken();
         setIsInitialized(true);
-        // Try to fetch user data on initial load
-        await fetchUserData();
+        // Fetch user data on initial load
+        await refetch();
       } catch (error) {
         console.error('Failed to initialize CSRF token:', error);
         setError('Failed to initialize application. Please refresh the page.');
@@ -49,34 +67,6 @@ function App() {
     initializeCSRF();
   }, []);
 
-  const fetchUserData = async () => {
-    try {
-      const response = await api.get('api/v1/user');
-      setUserData(response.data);
-      setError(null);
-    } catch (err: any) {
-      setUserData(null);
-      if (err.response?.status !== 401) {
-        // Only show error if it's not an authentication error
-        console.error('Error fetching user data:', err);
-        setError('Failed to fetch user data');
-      }
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      await api.post('api/v1/logout');
-      setUserData(null);
-      setResponse(null);
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'An error occurred during logout');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Login form state
   const [loginData, setLoginData] = useState({
@@ -106,10 +96,9 @@ function App() {
       const response = await api.post('api/v1/login', loginData);
       setResponse(response.data);
       // Fetch user data after successful login
-      await fetchUserData();
+      await refetch();
     } catch (err: any) {
       setError(err.response?.data?.message || 'An error occurred during login');
-      setUserData(null);
     } finally {
       setLoading(false);
     }
@@ -126,11 +115,9 @@ function App() {
       setError(null);
       const response = await api.post('api/v1/register', registerData);
       setResponse(response.data);
-      // Fetch user data after successful registration
-      await fetchUserData();
+
     } catch (err: any) {
       setError(err.response?.data?.message || 'An error occurred during registration');
-      setUserData(null);
     } finally {
       setLoading(false);
     }
@@ -148,12 +135,15 @@ function App() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('login') === 'success') {
-      fetchUserData();
+      refetch();
     } else if (params.get('error')) {
       console.error('Social login error:', params.get('error'));
       setError(`Social login failed: ${params.get('error')}`);
     }
   }, []);
+
+
+  if (redirect) return <Navigate to="/authenticated" replace />;
 
   return (
     <Container maxWidth="sm">
@@ -162,23 +152,6 @@ function App() {
           Auth API Testing Interface
         </Typography>
 
-        {userData ? (
-          <Paper sx={{ p: 2, mb: 3 }}>
-            <Typography variant="h6" gutterBottom>Logged in User:</Typography>
-            <pre style={{ overflow: 'auto', background: '#f5f5f5', padding: '1rem', borderRadius: '4px', marginBottom: '1rem' }}>
-              {JSON.stringify(userData, null, 2)}
-            </pre>
-            <Button
-              fullWidth
-              variant="contained"
-              color="error"
-              onClick={handleLogout}
-              disabled={loading}
-            >
-              {loading ? <CircularProgress size={24} /> : 'Logout'}
-            </Button>
-          </Paper>
-        ) : (
           <Paper sx={{ width: '100%', mt: 3 }}>
             <Tabs
               value={tab}
@@ -316,7 +289,7 @@ function App() {
               </form>
             </TabPanel>
           </Paper>
-        )}
+
 
         {error && (
           <Paper sx={{ mt: 3, p: 2, bgcolor: '#ffebee' }}>
