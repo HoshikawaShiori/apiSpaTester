@@ -14,6 +14,8 @@ const Booking = () => {
   const [time, setTime] = useState("");
   const [dentist, setDentist] = useState(null);
   const [fullyBookedDates, setFullyBookedDates] = useState([]);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (service) {
@@ -37,6 +39,8 @@ const Booking = () => {
 
   const handleBookingSubmit = async () => {
     try {
+      setSuccess(false);
+      setError(false);
       const serviceId = service.id;
       const dentistId = dentist.id;
       const selectedDate = date;
@@ -54,26 +58,39 @@ const Booking = () => {
 
       console.log("Appointment successfully booked:", response.data);
 
-      <Alert severity="success">
-        <AlertTitle>Success</AlertTitle>
-        Appointment successfully booked!
-      </Alert>;
+      
+      setStep(0);
       setService(null);
       setDate("");
       setTime("");
       setDentist(null);
+      setSuccess(true)
     } catch (error) {
       console.error("Error booking appointment:", error);
-
-      <Alert severity="error">
-        <AlertTitle>Error</AlertTitle>
-        Error booking appointment
-      </Alert>;
+      setError(true);
     }
   };
 
+  const resetBookingStatus =() =>{
+    setSuccess(false);
+    setError(false);
+  }
+
   return (
+
+    
     <div>
+          {success ? (
+      <Alert severity="success" onClose={resetBookingStatus}>
+        <AlertTitle>Success</AlertTitle>
+        Appointment successfully booked!
+      </Alert>
+    ) : error ? (
+      <Alert severity="error" onClose={resetBookingStatus}>
+        <AlertTitle>Error</AlertTitle>
+        Error booking appointment
+      </Alert>
+    ) : null}
       {step === 0 && (
         <SelectService onSelect={setService} onNext={handleNextStep} />
       )}

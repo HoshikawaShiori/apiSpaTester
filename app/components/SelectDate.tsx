@@ -26,6 +26,7 @@ const SelectDate = ({ service, fullyBookedDates, onSelect, onNext, onBack }) => 
             shouldDisableDate={(date) =>
               fullyBookedDates.includes(dayjs(date).format("YYYY-MM-DD"))
             }
+            disablePast
           />
         </Container>
       </LocalizationProvider>
