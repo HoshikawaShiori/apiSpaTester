@@ -47,11 +47,7 @@ function App() {
   useEffect(() => {
     checkAuth();
   }, []);
-  useEffect(() => {
-    checkAuth();
-  }, [response]);
-
-
+  
   useEffect(() => {
     const initializeCSRF = async () => {
       try {
@@ -66,6 +62,12 @@ function App() {
     };
     initializeCSRF();
   }, []);
+
+  useEffect(() => {
+    if (userData) {
+      setRedirect(true);
+    }
+  }, [userData]);
 
 
   // Login form state
@@ -94,9 +96,9 @@ function App() {
       setLoading(true);
       setError(null);
       const response = await api.post('api/v1/login', loginData);
-      setResponse(response.data);
       // Fetch user data after successful login
       await refetch();
+      setResponse(response.data);
     } catch (err: any) {
       setError(err.response?.data?.message || 'An error occurred during login');
     } finally {
