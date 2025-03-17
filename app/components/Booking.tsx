@@ -5,9 +5,13 @@ import SelectTime from "./SelectTime";
 import SelectDentist from "./SelectDentist";
 import AppointmentSummary from "./AppointmentSummary";
 import api from "../api/config";
-import { Alert, AlertTitle } from "@mui/material";
+import { Alert, AlertTitle, CircularProgress } from "@mui/material";
 
-const Booking = () => {
+interface BookingProps {
+  onBookingSuccess: () => void;
+}
+
+const Booking: React.FC<BookingProps> = ({ onBookingSuccess }) => {
   const [step, setStep] = useState(0);
   const [service, setService] = useState(null);
   const [date, setDate] = useState("");
@@ -16,14 +20,24 @@ const Booking = () => {
   const [fullyBookedDates, setFullyBookedDates] = useState([]);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     if (service) {
       const fetchFullyBookedDates = async () => {
-        const response = await api.get(
-          `api/v1/appointment/fully-booked-dates/?service_id=${service.id}`
-        );
-        setFullyBookedDates(response.data.fully_booked_dates);
+        try {
+          setLoading(true);
+          const response = await api.get(
+            `api/v1/appointment/fully-booked-dates/?service_id=${service.id}`
+          );
+          setFullyBookedDates(response.data.fully_booked_dates);
+        } catch (error) {
+          const message = error.response?.data?.message || "Failed to fetch booked dates";
+          setErrorMessage(message);
+        } finally {
+          setLoading(false);
+        }
       };
       fetchFullyBookedDates();
     }
@@ -39,35 +53,38 @@ const Booking = () => {
 
   const handleBookingSubmit = async () => {
     try {
+      setLoading(true);
       setSuccess(false);
       setError(false);
-      const serviceId = service.id;
-      const dentistId = dentist.id;
-      const selectedDate = date;
-      const selectedTime = time;
+      setErrorMessage("");
 
-      const response = await api.post(
-        "/api/v1/appointment/set-appointment",
-        {
-          serviceId: serviceId,
-          dentistId: dentistId,
-          date: selectedDate,
-          time: selectedTime,
-        }
-      );
+      const response = await api.post("/api/v1/appointment/set-appointment", {
+        serviceId: service.id,
+        dentistId: dentist.id,
+        date: date,
+        time: time,
+      });
 
-      console.log("Appointment successfully booked:", response.data);
-
-      
-      setStep(0);
-      setService(null);
-      setDate("");
-      setTime("");
-      setDentist(null);
-      setSuccess(true)
+      if (response.status === 201) {
+        setSuccess(true);
+        // Reset form
+        setStep(0);
+        setService(null);
+        setDate("");
+        setTime("");
+        setDentist(null);
+        
+        // Call the success callback to trigger refetch
+        onBookingSuccess();
+      }
     } catch (error) {
-      console.error("Error booking appointment:", error);
       setError(true);
+      const message = error.response?.data?.message || 
+                     error.response?.data?.error ||
+                     "Failed to book appointment";
+      setErrorMessage(message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -77,20 +94,23 @@ const Booking = () => {
   }
 
   return (
-
-    
     <div>
-          {success ? (
-      <Alert severity="success" onClose={resetBookingStatus}>
-        <AlertTitle>Success</AlertTitle>
-        Appointment successfully booked!
-      </Alert>
-    ) : error ? (
-      <Alert severity="error" onClose={resetBookingStatus}>
-        <AlertTitle>Error</AlertTitle>
-        Error booking appointment
-      </Alert>
-    ) : null}
+      {loading && <CircularProgress />}
+      
+      {success && (
+        <Alert severity="success" onClose={resetBookingStatus}>
+          <AlertTitle>Success</AlertTitle>
+          Appointment successfully booked!
+        </Alert>
+      )}
+      
+      {error && (
+        <Alert severity="error" onClose={resetBookingStatus}>
+          <AlertTitle>Error</AlertTitle>
+          {errorMessage}
+        </Alert>
+      )}
+      
       {step === 0 && (
         <SelectService onSelect={setService} onNext={handleNextStep} />
       )}
