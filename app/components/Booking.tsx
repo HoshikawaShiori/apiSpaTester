@@ -19,6 +19,7 @@ const Booking: React.FC<BookingProps> = ({ onBookingSuccess }) => {
   const [dentist, setDentist] = useState(null);
   const [fullyBookedDates, setFullyBookedDates] = useState([]);
   const [success, setSuccess] = useState(false);
+  const [successMsg, setSuccesMsg] = useState("");
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -51,6 +52,14 @@ const Booking: React.FC<BookingProps> = ({ onBookingSuccess }) => {
     setStep((prev) => prev - 1);
   };
 
+  const postPayment = (appointment:number) => { 
+      setLoading(true);
+      const response = api.post("/api/v1/post-payment", {
+        appointmentId: appointment,
+      });
+      return (response);
+  }
+
   const handleBookingSubmit = async () => {
     try {
       setLoading(true);
@@ -67,15 +76,18 @@ const Booking: React.FC<BookingProps> = ({ onBookingSuccess }) => {
 
       if (response.status === 201) {
         setSuccess(true);
-        // Reset form
+        setSuccesMsg(JSON.stringify(response.data.message))
         setStep(0);
         setService(null);
         setDate("");
         setTime("");
         setDentist(null);
-        
+
+       const paymentResponse= await postPayment(response.data.appointment);
+       setLoading(false);
+       onBookingSuccess();
+        window.location.href = paymentResponse.data.checkout_url;
         // Call the success callback to trigger refetch
-        onBookingSuccess();
       }
     } catch (error) {
       setError(true);
@@ -100,7 +112,7 @@ const Booking: React.FC<BookingProps> = ({ onBookingSuccess }) => {
       {success && (
         <Alert severity="success" onClose={resetBookingStatus}>
           <AlertTitle>Success</AlertTitle>
-          Appointment successfully booked!
+          {successMsg}
         </Alert>
       )}
       
