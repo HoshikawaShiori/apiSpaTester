@@ -116,8 +116,7 @@ function App() {
       setLoading(true);
       setError(null);
       const response = await api.post('api/v1/register', registerData);
-      setResponse(response.data);
-
+      await refetch();
     } catch (err: any) {
       setError(err.response?.data?.message || 'An error occurred during registration');
     } finally {
