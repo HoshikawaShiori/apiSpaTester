@@ -4,6 +4,7 @@ import SelectDate from "./SelectDate";
 import SelectTime from "./SelectTime";
 import SelectDentist from "./SelectDentist";
 import AppointmentSummary from "./AppointmentSummary";
+import SelectPaymentMethod from "./SelectPaymentMethod";
 import api from "../api/config";
 import { Alert, AlertTitle, CircularProgress } from "@mui/material";
 
@@ -23,6 +24,7 @@ const Booking: React.FC<BookingProps> = ({ onBookingSuccess }) => {
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<string | null>(null);
 
   useEffect(() => {
     if (service) {
@@ -52,13 +54,14 @@ const Booking: React.FC<BookingProps> = ({ onBookingSuccess }) => {
     setStep((prev) => prev - 1);
   };
 
-  const postPayment = (appointment:number) => { 
-      setLoading(true);
-      const response = api.post("/api/v1/post-payment", {
-        appointmentId: appointment,
-      });
-      return (response);
-  }
+  const postPayment = (appointment: number) => {
+    setLoading(true);
+    const response = api.post("/api/v1/post-payment", {
+      appointmentId: appointment,
+      paymentMethod: paymentMethod,
+    });
+    return response;
+  };
 
   const handleBookingSubmit = async () => {
     try {
@@ -155,6 +158,14 @@ const Booking: React.FC<BookingProps> = ({ onBookingSuccess }) => {
         />
       )}
       {step === 4 && (
+        <SelectPaymentMethod
+          onSelect={setPaymentMethod}
+          onNext={handleNextStep}
+          onBack={handlePreviousStep}
+          selectedMethod={paymentMethod}
+        />
+      )}
+      {step === 5 && (
         <AppointmentSummary
           service={service}
           date={date}

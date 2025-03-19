@@ -7,4 +7,12 @@ export default [
     path: "/authenticated",
     file: "routes/AuthenticatedPage.tsx", 
   },
+  {
+    path: "/successPayment",
+    file: "routes/SuccessPayment.tsx",
+  },
+  {
+    path: "/failedPayment",
+    file: "routes/FailedPayment.tsx",
+  },
 ] satisfies RouteConfig;
