@@ -6,6 +6,7 @@ import { Navigate } from 'react-router';
 import api from '../api/config';
 import Booking from '~/components/Booking';
 import AppointmentList from '~/components/AppointmentList';
+import AllAppointments from '~/components/AllAppointments';
 
 const AuthenticatedPage = () => {
   const [loading, setLoading] = useState(true);
@@ -78,6 +79,9 @@ const AuthenticatedPage = () => {
 
           {/* Appointments List */}
           <AppointmentList refetchTrigger={refetchTrigger} />
+
+          {/*Appointments List for all users */}
+          <AllAppointments refetchTrigger={refetchTrigger} />
 
           {/* Booking Form */}
           <Paper sx={{ p: 2, mb: 3 }}>

@@ -17,6 +17,12 @@ import api from "../api/config";
 
 interface Appointment {
   id: number;
+  patient: {
+    id: number;
+    name: string;
+    middle_name?: string;
+    last_name?: string;
+  };
   service: {
     id: number;
     name: string;
@@ -49,7 +55,7 @@ const AppointmentList: React.FC<AppointmentListProps> = ({
     try {
       setLoading(true);
       const response = await api.get(
-        `/api/v1/appointment/user-appointments?page=${page}`
+        `/api/v1/appointment/appointments?page=${page}`
       );
       setAppointments(response.data.appointments);
       setMaxPage(response.data.last_page);
@@ -88,7 +94,7 @@ const AppointmentList: React.FC<AppointmentListProps> = ({
   return (
     <Paper sx={{ p: 2, mb: 3 }}>
       <Typography variant="h6" gutterBottom>
-        Your Appointments
+        All Appointments
       </Typography>
 
       {Array.isArray(appointments) && appointments.length === 0 ? (
@@ -101,6 +107,7 @@ const AppointmentList: React.FC<AppointmentListProps> = ({
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell>Patient</TableCell>
                 <TableCell>Service</TableCell>
                 <TableCell>Date</TableCell>
                 <TableCell>Time</TableCell>
@@ -112,6 +119,13 @@ const AppointmentList: React.FC<AppointmentListProps> = ({
               {Array.isArray(appointments) &&
                 appointments.map((appointment) => (
                   <TableRow key={appointment.id}>
+                    <TableCell>
+                      {`${appointment.patient?.name || ""} ${
+                        appointment.patient?.middle_name || ""
+                      } ${appointment.patient?.last_name || ""}`.trim() ||
+                        "N/A"}
+                    </TableCell>
+
                     <TableCell>{appointment.service?.name || "N/A"}</TableCell>
                     <TableCell>{appointment.date} </TableCell>
                     <TableCell> {appointment.time} </TableCell>
