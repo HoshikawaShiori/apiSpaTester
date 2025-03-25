@@ -3,7 +3,7 @@ import { Container, Typography, Box, TextField, Button, Paper, Tab, Tabs, Circul
 import api, { fetchCSRFToken } from '../api/config'
 import { Google, GitHub, Facebook } from '@mui/icons-material'
 import useUserData from '../hooks/useUserData'
-import { isAuthenticated } from '~/api/authService';
+import { isAuthenticated, getUserRole } from '~/api/authService';
 import { Navigate } from 'react-router'
 
 interface TabPanelProps {
@@ -41,6 +41,8 @@ function App() {
 
   const checkAuth = async () => {
     if (await isAuthenticated()) {
+      const role = await getUserRole();
+      // Redirect to root (authenticated page)
       setRedirect(true);
     }
   };
@@ -144,7 +146,7 @@ function App() {
   }, []);
 
 
-  if (redirect) return <Navigate to="/authenticated" replace />;
+  if (redirect) return <Navigate to="/" replace />;
 
   return (
     <Container maxWidth="sm">
